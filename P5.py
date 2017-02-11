@@ -2,6 +2,7 @@ import os
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+import argparse
 from skimage.io import imread
 from sklearn.externals import joblib
 from scipy.ndimage.measurements import label
@@ -12,8 +13,7 @@ from p5lib.constants import *
 
 # Global flags
 debug = True
-short = False
-video = True
+short = True
 
 pyramid = [((64, 64),  [400, 500]),
            ((96, 96),  [400, 500]),
@@ -22,8 +22,6 @@ pyramid = [((64, 64),  [400, 500]),
 trace_size = 5
 heatmap_trace =[]
 boxes_trace = []
-
-pipeline = joblib.load('model.pkl')
 
 display_window = DisplayWindow(debug=debug)
 
@@ -80,14 +78,13 @@ def vehicle_detection(image):
 
     return display_window.get_output()
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('model', help='model used to classify cars')
+    args = parser.parse_args()
 
+    pipeline = joblib.load(args.model)
 
-if not video:
-    for img in os.listdir('test_images'):
-        image = imread('test_images/' + img)
-        plt.imshow(vehicle_detection(image))
-        plt.show()
-else:
     # video processing
     from moviepy.editor import VideoFileClip
 
