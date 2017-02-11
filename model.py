@@ -3,6 +3,7 @@ import pickle
 import glob
 import time
 import numpy as np
+import argparse
 from sklearn.svm import SVC
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
@@ -52,8 +53,13 @@ y = np.hstack((np.ones(len(car_features)), np.zeros(len(notcar_features))))
 
 pipeline = Pipeline([
     ('scaling', StandardScaler(with_mean=0, with_std=1)),
-    ('classification', SVC(kernel='linear', probability=True))
+    ('classification', SVC(kernel='linear', probability=True, verbose=True))
     ])
 
-pipeline.fit(X, y)
-joblib.dump(pipeline, 'pipeline-{}.pkl'.format(COLOR_SPACE))
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('model', help='name of the model output')
+    args = parser.parse_args()
+
+    pipeline.fit(X, y)
+    joblib.dump(pipeline, args.model)
