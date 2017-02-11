@@ -50,11 +50,9 @@ def slide(img, x_start_stop=[None, None], y_start_stop=[None, None],
 
 # Define a function you will pass an image 
 # and the list of windows to be searched (output of slide_windows())
-def search(img, windows, clf, color_space='RGB', 
-                    spatial_size=(32, 32), hist_bins=32, 
-                    hist_range=(0, 256), orient=9, 
-                    pix_per_cell=8, cell_per_block=2, 
-                    hog_channel=0,
+def search(img, windows, clf, color_space='RGB',
+                    spatial_size=(32, 32), hist_bins=32, hist_range=(0, 256),
+                    orient=9, pix_per_cell=8, cell_per_block=2, hog_channel=0,
                     spatial_feat=True, hist_feat=True, hog_feat=True):
 
     #1) Create an empty list to receive positive detection windows
@@ -67,9 +65,7 @@ def search(img, windows, clf, color_space='RGB',
         #4) Extract features for that window using single_img_features()
         features = feature_extraction.all_features([test_img], color_space=color_space, 
                             spatial_size=spatial_size, hist_bins=hist_bins, 
-                            orient=orient, pix_per_cell=pix_per_cell, 
-                            cell_per_block=cell_per_block, 
-                            hog_channel=hog_channel,
+                            orient=orient, pix_per_cell=pix_per_cell, cell_per_block=cell_per_block, hog_channel=hog_channel,
                             spatial_feat=spatial_feat, hist_feat=hist_feat, hog_feat=hog_feat)
         #6) Predict using your classifier
         prediction = clf.predict_proba(features)
