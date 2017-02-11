@@ -43,10 +43,8 @@ def vehicle_detection(image):
                             xy_window=p[0], xy_overlap=(0.5, 0.5))
                         
     hot_windows, prob_windows = window.search(image, windows, pipeline, color_space=COLOR_SPACE, 
-                            spatial_size=SPATIAL_SIZE, hist_bins=HIST_BINS, 
-                            orient=ORIENT, pix_per_cell=PIX_PER_CELL, 
-                            cell_per_block=CELL_PER_BLOCK, 
-                            hog_channel=HOG_CHANNEL,
+                            spatial_size=SPATIAL_SIZE, hist_bins=HIST_BINS, hist_range=HIST_RANGE,
+                            orient=ORIENT, pix_per_cell=PIX_PER_CELL, cell_per_block=CELL_PER_BLOCK, hog_channel=HOG_CHANNEL,
                             spatial_feat=SPATIAL_FEAT, hist_feat=HIST_FEAT, hog_feat=HOG_FEAT)
 
     window_img = window.draw_boxes(draw_image, hot_windows, color=(0, 0, 255), thick=6)
