@@ -53,7 +53,7 @@ y = np.hstack((np.ones(len(car_features)), np.zeros(len(notcar_features))))
 
 pipeline = Pipeline([
     ('scaling', StandardScaler(with_mean=0, with_std=1)),
-    ('classification', SVC(kernel='linear', probability=True, verbose=True))
+    ('classification', SVC(kernel='linear', probability=True))
     ])
 
 if __name__ == '__main__':
