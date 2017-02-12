@@ -16,10 +16,14 @@ def color_hist(img, nbins=32, bins_range=(0, 256)):
     channel1_hist = np.histogram(img[:,:,0], bins=nbins, range=bins_range)
     channel2_hist = np.histogram(img[:,:,1], bins=nbins, range=bins_range)
     channel3_hist = np.histogram(img[:,:,2], bins=nbins, range=bins_range)
+    # Generating bin centers
+    bin_edges = channel1_hist[1]
+    bin_centers = (bin_edges[1:]  + bin_edges[0:len(bin_edges)-1])/2
     # Concatenate the histograms into a single feature vector
     hist_features = np.concatenate((channel1_hist[0], channel2_hist[0], channel3_hist[0]))
+
     # Return the individual histograms, bin_centers and feature vector
-    return hist_features
+    return channel1_hist, channel2_hist, channel3_hist, bin_centers, hist_features
 
 # Define a function to return HOG features and visualization
 def extract_hog(img, orient, pix_per_cell, cell_per_block, vis=False, feature_vec=True):
@@ -61,7 +65,7 @@ def all_features(imgs, color_space='RGB', spatial_size=(32, 32),
         # Apply bin_spatial() to get spatial color features
         spatial_features = bin_spatial(feature_image, size=spatial_size)
         # Apply color_hist() also with a color space option now
-        hist_features = color_hist(feature_image, nbins=hist_bins, bins_range=hist_range)
+        _, _, _, _, hist_features = color_hist(feature_image, nbins=hist_bins, bins_range=hist_range)
         # Call extract_hog() with vis=False, feature_vec=True
         hog_features = extract_hog(feature_image[:,:,hog_channel], orient, pix_per_cell, cell_per_block, vis=False, feature_vec=True)
         # Append the new feature vector to the features list

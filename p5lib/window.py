@@ -50,7 +50,7 @@ def slide(img, x_start_stop=[None, None], y_start_stop=[None, None],
 
 # Define a function you will pass an image 
 # and the list of windows to be searched (output of slide_windows())
-def search(img, windows, clf, color_space='RGB',
+def search(img, windows, clf, color_space='RGB', threshold=0.5,
                     spatial_size=(32, 32), hist_bins=32, hist_range=(0, 256),
                     orient=9, pix_per_cell=8, cell_per_block=2, hog_channel=0,
                     spatial_feat=True, hist_feat=True, hog_feat=True):
@@ -69,12 +69,10 @@ def search(img, windows, clf, color_space='RGB',
                             spatial_feat=spatial_feat, hist_feat=hist_feat, hog_feat=hog_feat)
         #6) Predict using your classifier
         prediction = clf.predict_proba(features)
-        #7) If positive (prediction == 1) then save the window
-#        if prediction[0][1] > PROB_THRESHOLD:
-#            on_windows.append(window)
-#            windows_prob.append(prediction[0][1])
-        on_windows.append(window)
-        windows_prob.append(prediction[0][1])
+        #7) If probability is above the threshold, then save the window
+        if prediction[0][1] > threshold:
+            on_windows.append(window)
+            windows_prob.append(prediction[0][1])
 
     #8) Return windows for positive detections
     return on_windows, windows_prob
@@ -97,6 +95,10 @@ def generate_heatmap(img, bboxes, probs, threshold=0.5):
 
     for box, prob in zip(bboxes, probs):
         heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0]] += prob
+
+    # Normalize the heatmap_trace
+    max_value = np.max(heatmap)
+    heatmap = heatmap / max_value
 
     # Apply a threshold
     heatmap[heatmap < threshold] = 0

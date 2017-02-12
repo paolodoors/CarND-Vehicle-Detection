@@ -40,13 +40,13 @@ def vehicle_detection(image):
         windows += window.slide(image, x_start_stop=[None, None], y_start_stop=p[1], 
                             xy_window=p[0], xy_overlap=(0.5, 0.5))
                         
-    hot_windows, prob_windows = window.search(image, windows, pipeline, color_space=COLOR_SPACE, 
-                            spatial_size=SPATIAL_SIZE, hist_bins=HIST_BINS, hist_range=HIST_RANGE,
-                            orient=ORIENT, pix_per_cell=PIX_PER_CELL, cell_per_block=CELL_PER_BLOCK, hog_channel=HOG_CHANNEL,
-                            spatial_feat=SPATIAL_FEAT, hist_feat=HIST_FEAT, hog_feat=HOG_FEAT)
+    hot_windows, prob_windows = window.search(image, windows, pipeline, color_space=config['COLOR_SPACE'], threshold=PROB_THRESHOLD,
+                            spatial_size=config['SPATIAL_SIZE'], hist_bins=config['HIST_BINS'], hist_range=config['HIST_RANGE'],
+                            orient=config['ORIENT'], pix_per_cell=config['PIX_PER_CELL'], cell_per_block=config['CELL_PER_BLOCK'], hog_channel=config['HOG_CHANNEL'],
+                            spatial_feat=config['SPATIAL_FEAT'], hist_feat=config['HIST_FEAT'], hog_feat=config['HOG_FEAT'])
 
     window_img = window.draw_boxes(draw_image, hot_windows, color=(0, 0, 255), thick=6)
-    heatmap = window.generate_heatmap(draw_image, hot_windows, prob_windows, (1-1e-9))
+    heatmap = window.generate_heatmap(draw_image, hot_windows, prob_windows, PROB_THRESHOLD)
 
     display_window.set_region('p2', heatmap)
 
@@ -59,7 +59,7 @@ def vehicle_detection(image):
 
         display_window.set_region('p3', heatmap)
 
-        heatmap[heatmap < (1-1e-10)] = 0
+        heatmap[heatmap < PROB_THRESHOLD] = 0
         prev_heatmap = heatmap
 
         display_window.set_region('p4', heatmap)
@@ -83,7 +83,9 @@ if __name__ == '__main__':
     parser.add_argument('model', help='model used to classify cars')
     args = parser.parse_args()
 
-    pipeline = joblib.load(args.model)
+    data = joblib.load(args.model)
+    pipeline = data['model']
+    config = data['config']
 
     # video processing
     from moviepy.editor import VideoFileClip

@@ -12,16 +12,19 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.externals import joblib
 from skimage.io import imread
+from p5lib.parameters import *
 from p5lib.constants import *
 from p5lib import feature_extraction
 
 data_file = 'raw-data-{}.p'.format(COLOR_SPACE)
 
 if os.path.isfile(data_file):
+    print('Loading', data_file)
     data = pickle.load(open(data_file, 'rb'))
     cars = data['cars']
     notcars = data['notcars']
 else:
+    print('Reading images from', DATA_DIR)
     # Divide up into cars and notcars
     pattern = os.path.join(DATA_DIR, '**' + os.sep + '*.png')
     images = glob.iglob(pattern, recursive=True)
@@ -35,6 +38,8 @@ else:
 
     # Pickle the images to avoid reading them each time
     pickle.dump({'cars': cars, 'notcars': notcars}, open(data_file, 'wb'))
+
+print('Procesing features / SPATIAL_FEAT:', SPATIAL_FEAT, '- HIST_FEAT:', HIST_FEAT, '- HOG_FEAT:', HOG_FEAT)
 
 # Extract the features for each image group: cars and notcars
 car_features = feature_extraction.all_features(cars, color_space=COLOR_SPACE,
@@ -61,5 +66,13 @@ if __name__ == '__main__':
     parser.add_argument('model', help='name of the model output')
     args = parser.parse_args()
 
+    # Save parameters too
+    config = {
+            'SPATIAL_FEAT': SPATIAL_FEAT, 'SPATIAL_SIZE': SPATIAL_SIZE,
+            'HIST_FEAT': HIST_FEAT, 'HIST_BINS': HIST_BINS, 'HIST_RANGE': HIST_RANGE,
+            'HOG_FEAT': HOG_FEAT, 'ORIENT': ORIENT, 'PIX_PER_CELL': PIX_PER_CELL, 'CELL_PER_BLOCK': CELL_PER_BLOCK,
+            'HOG_CHANNEL': HOG_CHANNEL,	'COLOR_SPACE': COLOR_SPACE
+            }
+
     pipeline.fit(X, y)
-    joblib.dump(pipeline, args.model)
+    joblib.dump({'model': pipeline, 'config': config}, args.model)
