@@ -3,3 +3,9 @@ data/*
 *.p
 */__pycache__
 .ipynb_checkpoints
+
+
+#
+model.pkl
+project_output.mp4
+test_output.mp4
