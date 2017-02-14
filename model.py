@@ -7,7 +7,6 @@ import argparse
 from sklearn.svm import SVC
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
-#from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.externals import joblib
@@ -39,22 +38,42 @@ else:
     # Pickle the images to avoid reading them each time
     pickle.dump({'cars': cars, 'notcars': notcars}, open(data_file, 'wb'))
 
-print('Procesing features / SPATIAL_FEAT:', SPATIAL_FEAT, '- HIST_FEAT:', HIST_FEAT, '- HOG_FEAT:', HOG_FEAT)
+features_file = 'HIST_RANGE_{}_HIST_BINS_{}_CELL_PER_BLOCK_{}_HIST_FEAT_{}_COLOR_SPACE_{}_HOG_CHANNEL_{}_SPATIAL_SIZE_{}_SPATIAL_FEAT_{}_ORIENT_{}_PIX_PER_CELL_{}_HOG_FEAT_{}'.format(
+    str(HIST_RANGE).replace('(','').replace(')','').replace(', ', '_'),
+    HIST_BINS,
+    CELL_PER_BLOCK,
+    HIST_FEAT,
+    COLOR_SPACE,
+    HOG_CHANNEL,
+    str(SPATIAL_SIZE).replace('(','').replace(')','').replace(', ', '_'),
+    SPATIAL_FEAT,
+    ORIENT,
+    PIX_PER_CELL,
+    HOG_FEAT
+)
 
-# Extract the features for each image group: cars and notcars
-car_features = feature_extraction.all_features(cars, color_space=COLOR_SPACE,
-                                spatial_size=SPATIAL_SIZE, hist_bins=HIST_BINS, hist_range=HIST_RANGE,
-                                orient=ORIENT, pix_per_cell=PIX_PER_CELL, cell_per_block=CELL_PER_BLOCK, hog_channel=HOG_CHANNEL,
-                                spatial_feat=SPATIAL_FEAT, hist_feat=HIST_FEAT, hog_feat=HOG_FEAT)
-notcar_features = feature_extraction.all_features(notcars, color_space=COLOR_SPACE,
-                                spatial_size=SPATIAL_SIZE, hist_bins=HIST_BINS, hist_range=HIST_RANGE,
-                                orient=ORIENT, pix_per_cell=PIX_PER_CELL, cell_per_block=CELL_PER_BLOCK, hog_channel=HOG_CHANNEL,
-                                spatial_feat=SPATIAL_FEAT, hist_feat=HIST_FEAT, hog_feat=HOG_FEAT)
+if os.path.isfile(features_file):
+    print('Loading', features_file)
+    (X, y) = pickle.load(open(features_file, 'rb'))
+else:
+    print('Procesing features / SPATIAL_FEAT:', SPATIAL_FEAT, '- HIST_FEAT:', HIST_FEAT, '- HOG_FEAT:', HOG_FEAT)
+    # Extract the features for each image group: cars and notcars
+    car_features = feature_extraction.all_features(cars, color_space=COLOR_SPACE,
+                                    spatial_size=SPATIAL_SIZE, hist_bins=HIST_BINS, hist_range=HIST_RANGE,
+                                    orient=ORIENT, pix_per_cell=PIX_PER_CELL, cell_per_block=CELL_PER_BLOCK, hog_channel=HOG_CHANNEL,
+                                    spatial_feat=SPATIAL_FEAT, hist_feat=HIST_FEAT, hog_feat=HOG_FEAT)
+    notcar_features = feature_extraction.all_features(notcars, color_space=COLOR_SPACE,
+                                    spatial_size=SPATIAL_SIZE, hist_bins=HIST_BINS, hist_range=HIST_RANGE,
+                                    orient=ORIENT, pix_per_cell=PIX_PER_CELL, cell_per_block=CELL_PER_BLOCK, hog_channel=HOG_CHANNEL,
+                                    spatial_feat=SPATIAL_FEAT, hist_feat=HIST_FEAT, hog_feat=HOG_FEAT)
 
-# Create an array stack of feature vectors
-X = np.vstack((car_features, notcar_features)).astype(np.float64)
-# Define the labels vector
-y = np.hstack((np.ones(len(car_features)), np.zeros(len(notcar_features))))
+    # Create an array stack of feature vectors
+    X = np.vstack((car_features, notcar_features)).astype(np.float64)
+    # Define the labels vector
+    y = np.hstack((np.ones(len(car_features)), np.zeros(len(notcar_features))))
+
+    # Save processed features
+    pickle.dump((X, y), open(features_file, 'wb'))
 
 pipeline = Pipeline([
     ('scaling', StandardScaler(with_mean=0, with_std=1)),
