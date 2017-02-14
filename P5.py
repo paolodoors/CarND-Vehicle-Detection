@@ -12,20 +12,18 @@ from p5lib.display_tools import DisplayWindow
 from p5lib.constants import *
 
 # Global flags
-debug = True
-short = True
+debug = False
 
-pyramid = [((64, 64),  [400, 500]),
-           ((96, 96),  [400, 500]),
-           ((128, 128),[400, 700])]
+pyramid = [((48, 48),  [None, None], [400, 500], (0.5, 0.5)),
+           ((64, 64),  [None, None], [400, 500], (0.5, 0.5)),
+           ((96, 96),  [None, None], [400, 500], (0.5, 0.5)),
+           ((128, 128),[None, None], [400, 600], (0.5, 0.5))]
 
-trace_size = 5
+trace_size = TRACE
 heatmap_trace =[]
 boxes_trace = []
 
 display_window = DisplayWindow(debug=debug)
-
-prev_heatmap = None
 
 def vehicle_detection(image):
     global display_window
@@ -37,42 +35,35 @@ def vehicle_detection(image):
 
     windows = []
     for p in pyramid:
-        windows += window.slide(image, x_start_stop=[None, None], y_start_stop=p[1], 
-                            xy_window=p[0], xy_overlap=(0.5, 0.5))
+        windows += window.slide(image, x_start_stop=p[1], y_start_stop=p[2], xy_window=p[0], xy_overlap=p[3])
                         
-    hot_windows, prob_windows = window.search(image, windows, pipeline, color_space=config['COLOR_SPACE'], threshold=PROB_THRESHOLD,
+    hot_windows, prob_windows = window.search(image, windows, pipeline, color_space=config['COLOR_SPACE'], threshold=PROB_THRESHOLD_DETECTION,
                             spatial_size=config['SPATIAL_SIZE'], hist_bins=config['HIST_BINS'], hist_range=config['HIST_RANGE'],
                             orient=config['ORIENT'], pix_per_cell=config['PIX_PER_CELL'], cell_per_block=config['CELL_PER_BLOCK'], hog_channel=config['HOG_CHANNEL'],
                             spatial_feat=config['SPATIAL_FEAT'], hist_feat=config['HIST_FEAT'], hog_feat=config['HOG_FEAT'])
 
-    window_img = window.draw_boxes(draw_image, hot_windows, color=(0, 0, 255), thick=6)
-    heatmap = window.generate_heatmap(draw_image, hot_windows, prob_windows, PROB_THRESHOLD)
+    heatmap = window.generate_heatmap(draw_image, hot_windows, prob_windows, PROB_THRESHOLD_DETECTION)
 
     display_window.set_region('p2', heatmap)
 
     if len(heatmap_trace) < trace_size:
         heatmap_trace.append(heatmap)
     else:
-        heatmap_trace[0:4], heatmap_trace[4] = heatmap_trace[1:5], heatmap
+        # Create a FIFO fixed list to track the heatmaps
+        heatmap_trace[0:trace_size-1], heatmap_trace[trace_size-1] = heatmap_trace[1:trace_size+1], heatmap
         heatmap = np.dstack(heatmap_trace)
-        heatmap = np.average(heatmap, axis=2)
+        w = np.exp(np.arange(1/trace_size, 1.01, 1/trace_size) * 2)
+        heatmap = np.average(heatmap, axis=2, weights=w)
 
         display_window.set_region('p3', heatmap)
 
-        heatmap[heatmap < PROB_THRESHOLD] = 0
-        prev_heatmap = heatmap
+        heatmap[heatmap < PROB_THRESHOLD_FILTER] = 0
 
         display_window.set_region('p4', heatmap)
 
         labels = label(heatmap)
 
-        # If no labels where found, use the previous
-        if not labels[1] and prev_heatmap is not None:
-            labels = label(prev_heatmap)
-        elif labels[1]:
-            prev_heatmap = heatmap
-
-        final = window.draw_labeled_bboxes(np.copy(image), labels)
+        final = window.draw_labeled_bboxes(image, labels)
 
         display_window.set_region('p1', final)
 
@@ -81,6 +72,7 @@ def vehicle_detection(image):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('model', help='model used to classify cars')
+    parser.add_argument('video', help='which video to use, short or long')
     args = parser.parse_args()
 
     data = joblib.load(args.model)
@@ -90,12 +82,12 @@ if __name__ == '__main__':
     # video processing
     from moviepy.editor import VideoFileClip
 
-    if short:
-        video_input = 'test_video.mp4'
+    if args.video == 'short':
+            video_input = 'test_video.mp4'
     else:
         video_input = 'project_video.mp4'
 
-    video_output = video_input.replace('_video', '_output')
+    video_output = 'output_detection_'+args.video+'_'+str(PROB_THRESHOLD_DETECTION)+'_filter_'+str(PROB_THRESHOLD_FILTER)+'.mp4'
 
     clip = VideoFileClip(video_input)
     project_clip = clip.fl_image(vehicle_detection) #NOTE: this function expects color images!!
