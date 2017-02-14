@@ -49,7 +49,7 @@ def slide(img, x_start_stop=[None, None], y_start_stop=[None, None],
 
 
 # Define a function you will pass an image 
-# and the list of windows to be searched (output of slide_windows())
+# and the list of windows to be searched (output of slide())
 def search(img, windows, clf, color_space='RGB', threshold=0.5,
                     spatial_size=(32, 32), hist_bins=32, hist_range=(0, 256),
                     orient=9, pix_per_cell=8, cell_per_block=2, hog_channel=0,
@@ -104,17 +104,14 @@ def generate_heatmap(img, bboxes, probs, threshold=0.5):
     for box, prob in zip(bboxes, probs):
         heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0]] += prob
 
-    # Normalize the heatmap_trace
-    max_value = np.max(heatmap)
-    heatmap = heatmap / max_value
-
-    # Apply a threshold
+    # Apply the threshold
     heatmap[heatmap < threshold] = 0
 
     # Return the heatmap
     return heatmap
 
-def draw_labeled_bboxes(img, labels):
+def draw_labeled_bboxes(image, labels):
+    img = np.copy(image)
     # Iterate through all detected cars
     for car_number in range(1, labels[1]+1):
         # Find pixels with each car_number label value
